@@ -1,0 +1,48 @@
+Sonny               Soemarsono          sonny@adw.com                 01-01-1965
+Sandy               Wibisono            sandy@jakartawebs.com         09-10-1985
+Aah Ahmad           Kusumah             kusumah@jakartawebs.com       10-04-1984
+Zaky                Alvan               zaky@jakartawebs.com          18-06-1985
+Syahril             Hermana             syahril@jakartawebs.com       31-12-1992
+Efriandika          Pratama             ryan@jakartawebs.com          01-02-1990
+Sonny               Soemarsono          sonny2@adw.com                01-01-1965
+Sandy               Wibisono            sandy2@jakartawebs.com        09-10-1985
+Aah Ahmad           Kusumah             kusumah2@jakartawebs.com      10-04-1984
+Zaky                Alvan               zaky2@jakartawebs.com         18-06-1985
+Syahril             Hermana             syahril2@jakartawebs.com      31-12-1992
+Efriandika          Pratama             ryan2@jakartawebs.com         01-02-1990
+Sonny               Soemarsono          sonny3@adw.com                01-01-1965
+Sandy               Wibisono            sandy3@jakartawebs.com        09-10-1985
+Aah Ahmad           Kusumah             kusumah3@jakartawebs.com      10-04-1984
+Zaky                Alvan               zaky3@jakartawebs.com         18-06-1985
+Syahril             Hermana             syahril3@jakartawebs.com      31-12-1992
+Efriandika          Pratama             ryan3@jakartawebs.com         01-02-1990
+Sonny               Soemarsono          sonny4@adw.com                01-01-1965
+Sandy               Wibisono            sandy4@jakartawebs.com        09-10-1985
+Aah Ahmad           Kusumah             kusumah4@jakartawebs.com      10-04-1984
+Zaky                Alvan               zaky4@jakartawebs.com         18-06-1985
+Syahril             Hermana             syahril4@jakartawebs.com      31-12-1992
+Efriandika          Pratama             ryan4@jakartawebs.com         01-02-1990
+Sonny               Soemarsono          1sonny@adw.com                01-01-1965
+Sandy               Wibisono            1sandy@jakartawebs.com        09-10-1985
+Aah Ahmad           Kusumah             1kusumah@jakartawebs.com      10-04-1984
+Zaky                Alvan               1zaky@jakartawebs.com         18-06-1985
+Syahril             Hermana             1syahril@jakartawebs.com      31-12-1992
+Efriandika          Pratama             1ryan@jakartawebs.com         01-02-1990
+Sonny               Soemarsono          1sonny2@adw.com               01-01-1965
+Sandy               Wibisono            1sandy2@jakartawebs.com       09-10-1985
+Aah Ahmad           Kusumah             1kusumah2@jakartawebs.com     10-04-1984
+Zaky                Alvan               1zaky2@jakartawebs.com        18-06-1985
+Syahril             Hermana             1syahril2@jakartawebs.com     31-12-1992
+Efriandika          Pratama             1ryan2@jakartawebs.com        01-02-1990
+Sonny               Soemarsono          1sonny3@adw.com               01-01-1965
+Sandy               Wibisono            1sandy3@jakartawebs.com       09-10-1985
+Aah Ahmad           Kusumah             1kusumah3@jakartawebs.com     10-04-1984
+Zaky                Alvan               1zaky3@jakartawebs.com        18-06-1985
+Syahril             Hermana             1syahril3@jakartawebs.com     31-12-1992
+Efriandika          Pratama             1ryan3@jakartawebs.com        01-02-1990
+Sonny               Soemarsono          1sonny4@adw.com               01-01-1965
+Sandy               Wibisono            1sandy4@jakartawebs.com       09-10-1985
+Aah Ahmad           Kusumah             1kusumah4@jakartawebs.com     10-04-1984
+Zaky                Alvan               1zaky4@jakartawebs.com        18-06-1985
+Syahril             Hermana             1syahril4@jakartawebs.com     31-12-1992
+Efriandika          Pratama             1ryan4@jakartawebs.com        01-02-1990
