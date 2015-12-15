@@ -2,8 +2,6 @@ package com.jakartawebs.learn.integration;
 
 
 import java.beans.PropertyEditor;
-import java.io.File;
-import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -28,20 +26,16 @@ import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.SkipListener;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.listener.ItemListenerSupport;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;
 import org.springframework.batch.core.listener.SkipListenerSupport;
-import org.springframework.batch.integration.launch.JobLaunchRequest;
-import org.springframework.batch.integration.launch.JobLaunchingGateway;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -65,23 +59,8 @@ import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
-import org.springframework.integration.annotation.Gateway;
-import org.springframework.integration.annotation.IntegrationComponentScan;
-import org.springframework.integration.annotation.MessagingGateway;
-import org.springframework.integration.annotation.Transformer;
-import org.springframework.integration.dsl.IntegrationFlow;
-import org.springframework.integration.dsl.IntegrationFlows;
-import org.springframework.integration.dsl.core.Pollers;
-import org.springframework.integration.dsl.file.Files;
-import org.springframework.integration.mail.MailHeaders;
-import org.springframework.integration.mail.MailSendingMessageHandler;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.mail.MailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.MessageHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -92,103 +71,7 @@ import org.springframework.util.Assert;
  */
 @Configuration
 @EnableBatchProcessing
-@IntegrationComponentScan
 public class BatchIntegrationConfiguration {
-	@Value("${user.home}")
-	private String homeDirectory;
-	
-	/**
-	 * Transforming a {@link File} message into {@link JobLaunchRequest} message.
-	 * 
-	 * @author zakyalvan
-	 */
-	@Component("transformer")
-	public static class FileMessageToJobLaunchRequestTransformer {
-		private static final Logger LOGGER = LoggerFactory.getLogger(FileMessageToJobLaunchRequestTransformer.class);
-		
-		private Job importJob;
-		private String fileParameterName;
-		
-		@Autowired
-		public FileMessageToJobLaunchRequestTransformer(@Qualifier("importJob") Job importJob, @Value("input.file.name") String fileParameterName) {
-			Assert.notNull(importJob);
-			Assert.notNull(fileParameterName);
-			
-			this.importJob = importJob;
-			this.fileParameterName = fileParameterName;
-		}
-		
-		@Transformer
-		public JobLaunchRequest createJobLaunchRequest(Message<File> fileMessage) {
-			LOGGER.info("Create launch job request object from file message");
-			JobParametersBuilder parametersBuilder = new JobParametersBuilder();
-			parametersBuilder.addString(fileParameterName, fileMessage.getPayload().getAbsolutePath());		
-			return new JobLaunchRequest(importJob, parametersBuilder.toJobParameters());
-		}
-	}
-	
-	/**
-	 * FIXME
-	 * 
-	 * Modify so that status evaluation done here.
-	 * Send email when not completed.
-	 * 
-	 * @return
-	 */
-	@Bean
-	public IntegrationFlow statusEvaluationFlow() {
-		return flow -> flow
-				.<JobExecution, Boolean>route(jobExec -> jobExec.getStatus() == BatchStatus.COMPLETED, mapping -> mapping.subFlowMapping("true", subFlow -> subFlow.channel(MessageHeaders.ERROR_CHANNEL)));
-	}
-	
-	@Autowired
-	private JavaMailSender mailSender;
-	
-	@Bean
-	public MailSendingMessageHandler mailSendingMessageHandler() {
-		return new MailSendingMessageHandler(mailSender);
-	}
-	@Bean
-	public IntegrationFlow mailSendingFlow() {
-		return flow -> flow.handle(mailSendingMessageHandler());
-	}
-	
-	@MessagingGateway
-	public static interface MailSendingGateway {
-		@Gateway(requestChannel="mailSendingFlow.input")
-		void sendAsAsMailMessage(Object object);
-	}
-	
-	
-	/**
-	 * Please note, error channel will only catch error occured on asynch flow (Processed outside caller thread).
-	 */
-	@Autowired @Qualifier(MessageHeaders.ERROR_CHANNEL)
-	private MessageChannel errorChannel;
-	
-	@Bean
-	public IntegrationFlow errorNotificationFlow() {
-		return IntegrationFlows.from(errorChannel)
-				.route(object -> MailMessage.class.isAssignableFrom(object.getClass()), mapping -> mapping.subFlowMapping("false", subFlow -> subFlow.enrichHeaders(spec -> spec.header(MailHeaders.TO, "zaky@jakartawebs.com").header(MailHeaders.FROM, "zaky@jakartawebs.com").header(MailHeaders.SUBJECT, "Error On Integration Flow"))))
-				.handle(mailSendingFlow())
-				.get();
-	}
-	
-	@Bean
-	public JobLaunchingGateway launchJobGateway(JobLauncher jobLauncher) {
-		JobLaunchingGateway launchJobGateway = new JobLaunchingGateway(jobLauncher);
-		launchJobGateway.setOutputChannelName("statusEvaluationFlow.input");
-		return launchJobGateway;
-	}
-	
-	@Bean
-	public IntegrationFlow fileFlow(FileMessageToJobLaunchRequestTransformer transformer, JobLaunchingGateway launchJobGateway) throws IOException {
-		return IntegrationFlows.from(Files.inboundAdapter(new File(homeDirectory + File.separator + "FTP" + File.separator + "batch" + File.separator + "integration")).autoCreateDirectory(true), spec -> spec.poller(Pollers.fixedDelay(5000)))
-				.transform(transformer)
-				.handle(launchJobGateway)
-				.get();
-	}
-	
 	/**
 	 * Line mapper for flat file item reader used on step.
 	 * 
@@ -246,7 +129,7 @@ public class BatchIntegrationConfiguration {
 		}
 	}
 	
-	@Autowired
+	@Bean
 	public javax.validation.Validator validator() {
 		ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
 		return validatorFactory.getValidator();
@@ -313,7 +196,7 @@ public class BatchIntegrationConfiguration {
 
 			@Override
 			public void onSkipInProcess(Person item, Throwable t) {
-				System.err.println("Failed on processing of item : " + item + ", with exception message : " + t.getMessage());
+				System.err.println("Failed on processing of item : " + item + ", with exception message : " + t.getMessage() + "caused by : " + t.getCause().toString());
 			}
 		};
 	}
@@ -377,10 +260,5 @@ public class BatchIntegrationConfiguration {
 				.flow(importStep)
 				.end()
 				.build();
-	}
-	
-	@Bean
-	public JdbcTemplate jdbcTemplate(DataSource dataSource) {
-		return new JdbcTemplate(dataSource);
 	}
 }
