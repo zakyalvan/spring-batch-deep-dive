@@ -65,14 +65,23 @@ import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.integration.annotation.Gateway;
+import org.springframework.integration.annotation.IntegrationComponentScan;
+import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.core.Pollers;
 import org.springframework.integration.dsl.file.Files;
+import org.springframework.integration.mail.MailHeaders;
+import org.springframework.integration.mail.MailSendingMessageHandler;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.mail.MailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.MessageHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -83,6 +92,7 @@ import org.springframework.util.Assert;
  */
 @Configuration
 @EnableBatchProcessing
+@IntegrationComponentScan
 public class BatchIntegrationConfiguration {
 	@Value("${user.home}")
 	private String homeDirectory;
@@ -127,7 +137,41 @@ public class BatchIntegrationConfiguration {
 	 */
 	@Bean
 	public IntegrationFlow statusEvaluationFlow() {
-		return flow -> flow.handle(message -> System.out.println("6666666666666666666"));
+		return flow -> flow
+				.<JobExecution, Boolean>route(jobExec -> jobExec.getStatus() == BatchStatus.COMPLETED, mapping -> mapping.subFlowMapping("true", subFlow -> subFlow.channel(MessageHeaders.ERROR_CHANNEL)));
+	}
+	
+	@Autowired
+	private JavaMailSender mailSender;
+	
+	@Bean
+	public MailSendingMessageHandler mailSendingMessageHandler() {
+		return new MailSendingMessageHandler(mailSender);
+	}
+	@Bean
+	public IntegrationFlow mailSendingFlow() {
+		return flow -> flow.handle(mailSendingMessageHandler());
+	}
+	
+	@MessagingGateway
+	public static interface MailSendingGateway {
+		@Gateway(requestChannel="mailSendingFlow.input")
+		void sendAsAsMailMessage(Object object);
+	}
+	
+	
+	/**
+	 * Please note, error channel will only catch error occured on asynch flow (Processed outside caller thread).
+	 */
+	@Autowired @Qualifier(MessageHeaders.ERROR_CHANNEL)
+	private MessageChannel errorChannel;
+	
+	@Bean
+	public IntegrationFlow errorNotificationFlow() {
+		return IntegrationFlows.from(errorChannel)
+				.route(object -> MailMessage.class.isAssignableFrom(object.getClass()), mapping -> mapping.subFlowMapping("false", subFlow -> subFlow.enrichHeaders(spec -> spec.header(MailHeaders.TO, "zaky@jakartawebs.com").header(MailHeaders.FROM, "zaky@jakartawebs.com").header(MailHeaders.SUBJECT, "Error On Integration Flow"))))
+				.handle(mailSendingFlow())
+				.get();
 	}
 	
 	@Bean
