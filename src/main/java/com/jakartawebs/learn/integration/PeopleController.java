@@ -21,10 +21,10 @@ public class PeopleController {
 	@RequestMapping(method=RequestMethod.GET)
 	@Transactional(readOnly=true)
 	public Collection<Person> listPeople() {
-		return jdbcTemplate.query("SELECT first_name, last_name, email_address, date_of_birth FROM integration_people", new RowMapper<Person>() {
+		return jdbcTemplate.query("SELECT person_id, first_name, last_name, email_address, date_of_birth FROM integration_people", new RowMapper<Person>() {
 			@Override
 			public Person mapRow(ResultSet rs, int rowNum) throws SQLException {
-				return new Person(rs.getString(1), rs.getString(2), rs.getString(3), rs.getDate(4));
+				return new Person(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getDate(5));
 			}
 		});
 	}
