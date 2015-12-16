@@ -47,7 +47,6 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
-import org.springframework.batch.item.file.transform.Range;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.validator.ValidatingItemProcessor;
 import org.springframework.batch.item.validator.ValidationException;
@@ -71,7 +70,11 @@ import org.springframework.util.Assert;
  */
 @Configuration
 @EnableBatchProcessing
-public class BatchIntegrationConfiguration {
+public class ImportUserJobConfiguration {
+	@Autowired
+	@Qualifier(value="userFileSettings")
+	private FixedLengthTokenizerSettings userFileProperties;
+	
 	/**
 	 * Line mapper for flat file item reader used on step.
 	 * 
@@ -81,14 +84,8 @@ public class BatchIntegrationConfiguration {
 	public LineMapper<Person> personLineMapper() {
 		return new DefaultLineMapper<Person>() {{
 			setLineTokenizer(new FixedLengthTokenizer() {{
-				setNames(new String[] {"firstName", "lastName", "emailAddress", "dateOfBirth"});
-				
-				Range firstNameColumn = new Range(1, 20);
-				Range lastNameColumn = new Range(20, 40);
-				Range emailAddressColumn = new Range(40, 70);
-				Range dateOfBirthColumn = new Range(70, 80);
-				
-				setColumns(new Range[] {firstNameColumn, lastNameColumn, emailAddressColumn, dateOfBirthColumn});
+				setNames(userFileProperties.getNames());
+				setColumns(userFileProperties.getColumns());
 			}});
 			setFieldSetMapper(new BeanWrapperFieldSetMapper<Person>() {{
 				setTargetType(Person.class);
